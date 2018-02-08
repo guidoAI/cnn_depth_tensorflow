@@ -13,10 +13,12 @@ class DataSet:
         self.batch_size = batch_size
 
     def csv_inputs(self, csv_file_path):
+
         filename_queue = tf.train.string_input_producer([csv_file_path], shuffle=True)
         reader = tf.TextLineReader()
         _, serialized_example = reader.read(filename_queue)
         filename, depth_filename = tf.decode_csv(serialized_example, [["path"], ["annotation"]])
+        
         # input
         jpg = tf.read_file(filename)
         image = tf.image.decode_jpeg(jpg, channels=3)
@@ -40,6 +42,13 @@ class DataSet:
         )
         return images, depths, invalid_depths
 
+#    def one_image(self, image_name):
+#        # input
+#        jpg = tf.read_file(filename)
+#        image = tf.image.decode_jpeg(jpg, channels=3)
+#        image = tf.cast(image, tf.float32)
+        
+        
 
 def output_predict(depths, images, output_dir):
     print("output predict into %s" % output_dir)

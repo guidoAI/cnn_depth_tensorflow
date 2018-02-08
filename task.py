@@ -9,6 +9,8 @@ from dataset import output_predict
 import model
 import train_operation as op
 
+# Option for prediction is to copy this script, change batch size to 1 and put an image we want in there.
+
 MAX_STEPS = 10000000
 LOG_DEVICE_PLACEMENT = False
 BATCH_SIZE = 8
@@ -71,7 +73,7 @@ def train():
         if REFINE_TRAIN:
             saver_refine = tf.train.Saver(refine_params)
         # fine tune
-        if FINE_TUNE:
+        if REFINE_TRAIN: 
             coarse_ckpt = tf.train.get_checkpoint_state(COARSE_DIR)
             if coarse_ckpt and coarse_ckpt.model_checkpoint_path:
                 print("Pretrained coarse Model Loading.")
@@ -79,7 +81,7 @@ def train():
                 print("Pretrained coarse Model Restored.")
             else:
                 print("No Pretrained coarse Model.")
-            if REFINE_TRAIN:
+            if FINE_TUNE:
                 refine_ckpt = tf.train.get_checkpoint_state(REFINE_DIR)
                 if refine_ckpt and refine_ckpt.model_checkpoint_path:
                     print("Pretrained refine Model Loading.")
