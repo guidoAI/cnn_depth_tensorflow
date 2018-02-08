@@ -9,6 +9,8 @@ Create a csv file with images in column 1 and depth images in column 2.
 
 import os
 import sys
+import time
+import numpy as np
 
 # function for changing the name:
 pattern1 = 'sync/';
@@ -43,9 +45,12 @@ fname_target = 'train_new.csv'
 f = open(fname_target, 'w');
 for idx in range(len(images_left)):
 
+    if(np.mod(idx, np.round(len(images_left)/10)) == 0):
+        print('.');
+        time.sleep(0.1);
+
     image_name = images_left[idx];
     disparity_name = get_disparity_name(image_name);
     f.write('{},{}\n'.format(image_name, disparity_name));
     
-    
-    
+f.close();
