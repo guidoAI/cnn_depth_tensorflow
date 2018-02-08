@@ -3,10 +3,18 @@ from tensorflow.python.platform import gfile
 import numpy as np
 from PIL import Image
 
-IMAGE_HEIGHT = 228
-IMAGE_WIDTH = 304
-TARGET_HEIGHT = 55
-TARGET_WIDTH = 74
+#NYU_data = True;
+#IMAGE_HEIGHT = 228
+#IMAGE_WIDTH = 304
+#TARGET_HEIGHT = 55
+#TARGET_WIDTH = 74
+
+NYU_data = False;
+IMAGE_HEIGHT = 168
+IMAGE_WIDTH = 520
+TARGET_HEIGHT = 40
+TARGET_WIDTH = 128
+
 
 class DataSet:
     def __init__(self, batch_size):
@@ -20,8 +28,12 @@ class DataSet:
         filename, depth_filename = tf.decode_csv(serialized_example, [["path"], ["annotation"]])
         
         # input
-        jpg = tf.read_file(filename)
-        image = tf.image.decode_jpeg(jpg, channels=3)
+        if(NYU_data):
+            jpg = tf.read_file(filename)
+            image = tf.image.decode_jpeg(jpg, channels=3)
+        else:
+            png = tf.read_file(filename)
+            image = tf.image.decode_png(png, channels=3)
         image = tf.cast(image, tf.float32)       
         # target
         depth_png = tf.read_file(depth_filename)

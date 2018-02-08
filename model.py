@@ -6,6 +6,22 @@ import math
 from model_part import conv2d
 from model_part import fc
 
+
+#NYU = True;
+#OUTPUT_HEIGHT = 55;
+#OUTPUT_WIDTH = 74;
+#COARSE_5_OUT = 6*10*256
+#INTERMEDIATE = 4096;
+
+NYU = False;
+OUTPUT_HEIGHT = 40;
+OUTPUT_WIDTH = 128;
+COARSE_5_OUT = 26 * 4 * 256 
+INTERMEDIATE = OUTPUT_HEIGHT*OUTPUT_WIDTH + 26;
+
+# weights out are always equal to number of pixels in target output size:
+WEIGHTS_OUT = OUTPUT_HEIGHT * OUTPUT_WIDTH
+
 def inference(images, reuse=False, trainable=True):
     coarse1_conv = conv2d('coarse1', images, [11, 11, 3, 96], [96], [1, 4, 4, 1], padding='VALID', reuse=reuse, trainable=trainable)
     coarse1 = tf.nn.max_pool(coarse1_conv, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding='VALID', name='pool1')
@@ -13,10 +29,13 @@ def inference(images, reuse=False, trainable=True):
     coarse2 = tf.nn.max_pool(coarse2_conv, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding='SAME', name='pool1')
     coarse3 = conv2d('coarse3', coarse2, [3, 3, 256, 384], [384], [1, 1, 1, 1], padding='VALID', reuse=reuse, trainable=trainable)
     coarse4 = conv2d('coarse4', coarse3, [3, 3, 384, 384], [384], [1, 1, 1, 1], padding='VALID', reuse=reuse, trainable=trainable)
-    coarse5 = conv2d('coarse5', coarse4, [3, 3, 384, 256], [256], [1, 1, 1, 1], padding='VALID', reuse=reuse, trainable=trainable)
-    coarse6 = fc('coarse6', coarse5, [6*10*256, 4096], [4096], reuse=reuse, trainable=trainable)
-    coarse7 = fc('coarse7', coarse6, [4096, 4070], [4070], reuse=reuse, trainable=trainable)
-    coarse7_output = tf.reshape(coarse7, [-1, 55, 74, 1])
+    if(NYU):
+        coarse5 = conv2d('coarse5', coarse4, [3, 3, 384, 256], [256], [1, 1, 1, 1], padding='VALID', reuse=reuse, trainable=trainable)
+    else:
+        coarse5 = conv2d('coarse5', coarse4, [3, 3, 384, 256], [256], [1, 1, 1, 1], padding='SAME', reuse=reuse, trainable=trainable)
+    coarse6 = fc('coarse6', coarse5, [COARSE_5_OUT, INTERMEDIATE], [INTERMEDIATE], reuse=reuse, trainable=trainable)
+    coarse7 = fc('coarse7', coarse6, [INTERMEDIATE, WEIGHTS_OUT], [WEIGHTS_OUT], reuse=reuse, trainable=trainable)
+    coarse7_output = tf.reshape(coarse7, [-1, OUTPUT_HEIGHT, OUTPUT_WIDTH, 1])
     return coarse7_output
 
 
@@ -32,9 +51,9 @@ def inference_refine(images, coarse7_output, keep_conv, reuse=False, trainable=T
 
 
 def loss(logits, depths, invalid_depths):
-    logits_flat = tf.reshape(logits, [-1, 55*74])
-    depths_flat = tf.reshape(depths, [-1, 55*74])
-    invalid_depths_flat = tf.reshape(invalid_depths, [-1, 55*74])
+    logits_flat = tf.reshape(logits, [-1, OUTPUT_HEIGHT*OUTPUT_WIDTH])
+    depths_flat = tf.reshape(depths, [-1, OUTPUT_HEIGHT*OUTPUT_WIDTH])
+    invalid_depths_flat = tf.reshape(invalid_depths, [-1, OUTPUT_HEIGHT*OUTPUT_WIDTH])
 
     predict = tf.multiply(logits_flat, invalid_depths_flat)
     target = tf.multiply(depths_flat, invalid_depths_flat)
@@ -43,7 +62,7 @@ def loss(logits, depths, invalid_depths):
     sum_square_d = tf.reduce_sum(square_d, 1)
     sum_d = tf.reduce_sum(d, 1)
     sqare_sum_d = tf.square(sum_d)
-    cost = tf.reduce_mean(sum_square_d / 55.0*74.0 - 0.5*sqare_sum_d / math.pow(55*74, 2))
+    cost = tf.reduce_mean(sum_square_d / float(OUTPUT_HEIGHT)*float(OUTPUT_WIDTH) - 0.5*sqare_sum_d / math.pow(OUTPUT_HEIGHT*OUTPUT_WIDTH, 2))
     tf.add_to_collection('losses', cost)
     return tf.add_n(tf.get_collection('losses'), name='total_loss')
 

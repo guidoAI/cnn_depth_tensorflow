@@ -15,14 +15,17 @@ import numpy as np
 #OUTPUT_HEIGHT = 55;
 #OUTPUT_WIDTH = 74;
 
-INPUT_HEIGHT = np.round(375*0.75);
-INPUT_WIDTH = np.round(1242*0.75); 
+INPUT_HEIGHT = 168;
+INPUT_WIDTH = 520;
 OUTPUT_HEIGHT = 40;
 OUTPUT_WIDTH = 128;
 
+print('TARGET OUTPUT = {} x {} = {} pixels'.format(OUTPUT_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT * OUTPUT_WIDTH));
 
 height = np.asarray([0.0]*8)
 width = np.asarray([0.0]*8)
+
+print('COARSE');
 
 i = 0;
 height[i] = INPUT_HEIGHT;
@@ -84,8 +87,12 @@ print('H,W = {},{}'.format(height[i], width[i]));
 i += 1;
 filter_size = 3;
 stride = 1;
-height[i] = np.ceil((height[i-1] - filter_size + 1) / stride);
-width[i] = np.ceil((width[i-1] - filter_size + 1) / stride);
+# SAME:
+height[i] = np.ceil(height[i-1] / stride);
+width[i] = np.ceil(width[i-1] / stride);
+# VALID:
+#height[i] = np.ceil((height[i-1] - filter_size + 1) / stride);
+#width[i] = np.ceil((width[i-1] - filter_size + 1) / stride);
 print('H,W = {},{}'.format(height[i], width[i]));
 
 depth = 256;
@@ -99,3 +106,59 @@ print('Number of weights out = {}'.format(OUTPUT_HEIGHT*OUTPUT_WIDTH))
 
 
 
+print('FINE');
+
+i = 0;
+height[i] = INPUT_HEIGHT;
+width[i] = INPUT_WIDTH;
+print('H,W = {},{}'.format(height[i], width[i]));
+
+#fine1_conv = conv2d('fine1', images, [9, 9, 3, 63], [63], [1, 2, 2, 1], padding='VALID', reuse=reuse, trainable=trainable)
+i += 1;
+filter_size = 9;
+stride = 2;
+height[i] = np.ceil((height[i-1] - filter_size + 1) / stride);
+width[i] = np.ceil((width[i-1] - filter_size + 1) / stride);
+print('H,W = {},{}'.format(height[i], width[i]));
+
+#fine1 = tf.nn.max_pool(fine1_conv, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding='SAME', name='fine_pool1')
+i += 1;
+filter_size = 3;
+stride = 2;
+height[i] = np.ceil(height[i-1] / stride);
+width[i] = np.ceil(width[i-1] / stride);
+print('H,W = {},{}'.format(height[i], width[i]));
+
+#fine1_dropout = tf.nn.dropout(fine1, keep_conv)
+#fine2 = tf.concat([fine1_dropout, coarse7_output], 3) # how are they conacetanted?
+
+#fine3 = conv2d('fine3', fine2, [5, 5, 64, 64], [64], [1, 1, 1, 1], padding='SAME', reuse=reuse, trainable=trainable)
+i += 1;
+filter_size = 5;
+stride = 1;
+height[i] = np.ceil(height[i-1] / stride);
+width[i] = np.ceil(width[i-1] / stride);
+print('H,W = {},{}'.format(height[i], width[i]));
+
+#fine3_dropout = tf.nn.dropout(fine3, keep_conv)
+
+# OLD:
+#fine4 = conv2d('fine4', fine3_dropout, [5, 5, 64, 1], [1], [1, 1, 1, 1], padding='SAME', reuse=reuse, trainable=trainable)
+i += 1;
+filter_size = 5;
+stride = 1;
+height[i] = np.ceil(height[i-1] / stride);
+width[i] = np.ceil(width[i-1] / stride);
+print('H,W = {},{}'.format(height[i], width[i]));
+
+## NEW:
+##fine4 = conv2d('fine4', fine3_dropout, [5, 5, 64, 1], [1], [1, 1, 1, 1], padding='VALID', reuse=reuse, trainable=trainable)
+#i += 1;
+#filter_size = 7;
+#stride = 1;
+#height[i] = np.ceil((height[i-1] - filter_size + 1) / stride);
+#width[i] = np.ceil((width[i-1] - filter_size + 1) / stride);
+#print('H,W = {},{}'.format(height[i], width[i]));
+
+
+print('Number of weights out = {}'.format(height[i]*width[i]))
