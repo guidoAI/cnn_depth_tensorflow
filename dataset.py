@@ -39,7 +39,10 @@ class DataSet:
         depth_png = tf.read_file(depth_filename)
         depth = tf.image.decode_png(depth_png, channels=1)
         depth = tf.cast(depth, tf.float32)
-        depth = tf.div(depth, [255.0])
+        if(NYU_data):
+            depth = tf.div(depth, [255.0])
+        else:
+            depth = tf.div(depth, [64.0])            
         #depth = tf.cast(depth, tf.int64)
         # resize
         image = tf.image.resize_images(image, (IMAGE_HEIGHT, IMAGE_WIDTH))

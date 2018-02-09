@@ -11,6 +11,10 @@ import os
 import sys
 import time
 import numpy as np
+import cv2
+import pdb
+
+SANITY_CHECK = True;
 
 # function for changing the name:
 pattern1 = 'sync/';
@@ -52,5 +56,15 @@ for idx in range(len(images_left)):
     image_name = images_left[idx];
     disparity_name = get_disparity_name(image_name);
     f.write('{},{}\n'.format(image_name, disparity_name));
+    
+    if(SANITY_CHECK):
+        im = cv2.imread(image_name);
+        disp = cv2.imread(disparity_name);
+        mean_im = np.mean(im[:]);
+        mean_disp = np.mean(disp[:]);
+        print('{}/{}: Mean im = {}, disp = {}.'.format(idx, len(images_left), mean_im, mean_disp));
+        if(mean_disp > 250.0 or mean_im > 250.0):
+            print('filename: {}'.format(image_name));
+            pdb.set_trace();        
     
 f.close();
