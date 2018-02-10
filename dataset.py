@@ -9,11 +9,19 @@ from PIL import Image
 #TARGET_HEIGHT = 55
 #TARGET_WIDTH = 74
 
+# KITTI:
 NYU_data = False;
 IMAGE_HEIGHT = 168
 IMAGE_WIDTH = 520
 TARGET_HEIGHT = 40
 TARGET_WIDTH = 128
+
+# Forest:
+#NYU_data = False;
+#IMAGE_HEIGHT = 240
+#IMAGE_WIDTH = 240
+#TARGET_HEIGHT = 58
+#TARGET_WIDTH = 58
 
 
 class DataSet:
