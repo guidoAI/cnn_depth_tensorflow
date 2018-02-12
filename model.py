@@ -6,18 +6,24 @@ import math
 from model_part import conv2d
 from model_part import fc
 
+# data_type shouild come from one source. Now we have to set it both here and in dataset.py
+data_type = 'forest'; # 'NYU' # 'KITTI'
 
-#NYU = True;
-#OUTPUT_HEIGHT = 55;
-#OUTPUT_WIDTH = 74;
-#COARSE_5_OUT = 6*10*256
-#INTERMEDIATE = 4096;
-
-NYU = False;
-OUTPUT_HEIGHT = 40;
-OUTPUT_WIDTH = 128;
-COARSE_5_OUT = 26 * 4 * 256 
-INTERMEDIATE = OUTPUT_HEIGHT*OUTPUT_WIDTH + 26;
+if(data_type == 'NYU'):
+    OUTPUT_HEIGHT = 55;
+    OUTPUT_WIDTH = 74;
+    COARSE_5_OUT = 6*10*256
+    INTERMEDIATE = 4096;
+elif(data_type == 'KITTI'):
+    OUTPUT_HEIGHT = 40;
+    OUTPUT_WIDTH = 128;
+    COARSE_5_OUT = 26 * 4 * 256 
+    INTERMEDIATE = OUTPUT_HEIGHT*OUTPUT_WIDTH + 26;
+else:
+    OUTPUT_HEIGHT = 58;
+    OUTPUT_WIDTH = 58;
+    COARSE_5_OUT = 8 * 8 * 256 
+    INTERMEDIATE = OUTPUT_HEIGHT*OUTPUT_WIDTH + 26;
 
 # weights out are always equal to number of pixels in target output size:
 WEIGHTS_OUT = OUTPUT_HEIGHT * OUTPUT_WIDTH
@@ -29,7 +35,7 @@ def inference(images, reuse=False, trainable=True):
     coarse2 = tf.nn.max_pool(coarse2_conv, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding='SAME', name='pool1')
     coarse3 = conv2d('coarse3', coarse2, [3, 3, 256, 384], [384], [1, 1, 1, 1], padding='VALID', reuse=reuse, trainable=trainable)
     coarse4 = conv2d('coarse4', coarse3, [3, 3, 384, 384], [384], [1, 1, 1, 1], padding='VALID', reuse=reuse, trainable=trainable)
-    if(NYU):
+    if(data_type == 'NYU'):
         coarse5 = conv2d('coarse5', coarse4, [3, 3, 384, 256], [256], [1, 1, 1, 1], padding='VALID', reuse=reuse, trainable=trainable)
     else:
         coarse5 = conv2d('coarse5', coarse4, [3, 3, 384, 256], [256], [1, 1, 1, 1], padding='SAME', reuse=reuse, trainable=trainable)

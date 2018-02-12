@@ -3,26 +3,24 @@ from tensorflow.python.platform import gfile
 import numpy as np
 from PIL import Image
 
-#NYU_data = True;
-#IMAGE_HEIGHT = 228
-#IMAGE_WIDTH = 304
-#TARGET_HEIGHT = 55
-#TARGET_WIDTH = 74
+# data_type shouild come from one source. Now we have to set it both here and in model.py
+data_type = 'forest'; # 'NYU' # 'KITTI' # 'forest'
 
-# KITTI:
-NYU_data = False;
-IMAGE_HEIGHT = 168
-IMAGE_WIDTH = 520
-TARGET_HEIGHT = 40
-TARGET_WIDTH = 128
-
-# Forest:
-#NYU_data = False;
-#IMAGE_HEIGHT = 240
-#IMAGE_WIDTH = 240
-#TARGET_HEIGHT = 58
-#TARGET_WIDTH = 58
-
+if(data_type == 'NYU'):
+    IMAGE_HEIGHT = 228
+    IMAGE_WIDTH = 304
+    TARGET_HEIGHT = 55
+    TARGET_WIDTH = 74
+elif(data_type == 'KITTI'):
+    IMAGE_HEIGHT = 168
+    IMAGE_WIDTH = 520
+    TARGET_HEIGHT = 40
+    TARGET_WIDTH = 128
+else:
+    IMAGE_HEIGHT = 240
+    IMAGE_WIDTH = 240
+    TARGET_HEIGHT = 58
+    TARGET_WIDTH = 58
 
 class DataSet:
     def __init__(self, batch_size):
@@ -36,7 +34,7 @@ class DataSet:
         filename, depth_filename = tf.decode_csv(serialized_example, [["path"], ["annotation"]])
         
         # input
-        if(NYU_data):
+        if(data_type == 'NYU'):
             jpg = tf.read_file(filename)
             image = tf.image.decode_jpeg(jpg, channels=3)
         else:
@@ -47,7 +45,7 @@ class DataSet:
         depth_png = tf.read_file(depth_filename)
         depth = tf.image.decode_png(depth_png, channels=1)
         depth = tf.cast(depth, tf.float32)
-        if(NYU_data):
+        if(data_type == 'NYU' or data_type == 'forest'):
             depth = tf.div(depth, [255.0])
         else:
             depth = tf.div(depth, [64.0])            

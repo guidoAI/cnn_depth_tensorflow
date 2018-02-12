@@ -10,22 +10,25 @@ Script that helps calculate the changes needed to apply the script to other inpu
 import numpy as np
 
 # original values:
+#NYU = True;
 #INPUT_HEIGHT = 228;
 #INPUT_WIDTH = 304;
 #OUTPUT_HEIGHT = 55;
 #OUTPUT_WIDTH = 74;
 
 # KITTI:
-INPUT_HEIGHT = 168;
-INPUT_WIDTH = 520;
-OUTPUT_HEIGHT = 40;
-OUTPUT_WIDTH = 128;
+# NYU=False;
+#INPUT_HEIGHT = 168;
+#INPUT_WIDTH = 520;
+#OUTPUT_HEIGHT = 40;
+#OUTPUT_WIDTH = 128;
 
 # Forest:
-#INPUT_HEIGHT = 240;
-#INPUT_WIDTH = 240;
-#OUTPUT_HEIGHT = 58;
-#OUTPUT_WIDTH = 58;
+NYU=False;
+INPUT_HEIGHT = 240;
+INPUT_WIDTH = 240;
+OUTPUT_HEIGHT = 58;
+OUTPUT_WIDTH = 58;
 
 
 print('TARGET OUTPUT = {} x {} = {} pixels'.format(OUTPUT_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT * OUTPUT_WIDTH));
@@ -95,12 +98,14 @@ print('H,W = {},{}'.format(height[i], width[i]));
 i += 1;
 filter_size = 3;
 stride = 1;
-# SAME:
-height[i] = np.ceil(height[i-1] / stride);
-width[i] = np.ceil(width[i-1] / stride);
-# VALID:
-#height[i] = np.ceil((height[i-1] - filter_size + 1) / stride);
-#width[i] = np.ceil((width[i-1] - filter_size + 1) / stride);
+if(not NYU):
+    # SAME:
+    height[i] = np.ceil(height[i-1] / stride);
+    width[i] = np.ceil(width[i-1] / stride);
+else:
+    # VALID:
+    height[i] = np.ceil((height[i-1] - filter_size + 1) / stride);
+    width[i] = np.ceil((width[i-1] - filter_size + 1) / stride);
 print('H,W = {},{}'.format(height[i], width[i]));
 
 depth = 256;
