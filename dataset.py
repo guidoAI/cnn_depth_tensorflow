@@ -21,6 +21,8 @@ else:
     IMAGE_WIDTH = 240
     TARGET_HEIGHT = 58
     TARGET_WIDTH = 58
+    
+CONFIDENCE_MAP = True
 
 class DataSet:
     def __init__(self, batch_size):
@@ -31,7 +33,11 @@ class DataSet:
         filename_queue = tf.train.string_input_producer([csv_file_path], shuffle=True)
         reader = tf.TextLineReader()
         _, serialized_example = reader.read(filename_queue)
-        filename, depth_filename = tf.decode_csv(serialized_example, [["path"], ["annotation"]])
+        
+        if(not CONFIDENCE_MAP):
+            filename, depth_filename = tf.decode_csv(serialized_example, [["path"], ["annotation"]])
+        else:
+            filename, depth_filename, conf_filename = tf.decode_csv(serialized_example, [["path"], ["annotation"], ["confidence"]])
         
         # input
         if(data_type == 'NYU'):
@@ -49,11 +55,21 @@ class DataSet:
             depth = tf.div(depth, [255.0])
         else:
             depth = tf.div(depth, [64.0])      
+            
+        if(CONFIDENCE_MAP):
+            conf_png = tf.read_file(conf_filename)
+            confidence_map = tf.image.decode_png(conf_png, channels=1)
+            confidence_map = tf.cast(confidence_map, tf.float32)
+            confidence_map = tf.div(confidence_map, [255.0])
         #depth = tf.cast(depth, tf.int64)
         # resize
         image = tf.image.resize_images(image, (IMAGE_HEIGHT, IMAGE_WIDTH))
         depth = tf.image.resize_images(depth, (TARGET_HEIGHT, TARGET_WIDTH))
         invalid_depth = tf.sign(depth)
+
+        if(CONFIDENCE_MAP):
+            invalid_depth = tf.multiply(invalid_depth, confidence_map);
+        
         # generate batch
         images, depths, invalid_depths = tf.train.batch(
             [image, depth, invalid_depth],

@@ -14,10 +14,11 @@ import numpy as np
 import cv2
 import pdb
 
-KITTI = False;
+KITTI = True;
+CONFIDENCE_MAP = True;
 
 if(KITTI):
-    SANITY_CHECK = True;
+    SANITY_CHECK = False;
     WRITE = True;
     
     # function for changing the name:
@@ -29,6 +30,8 @@ if(KITTI):
     lp3 = len(pattern3);
     disp_dirname = 'disp/';
     disp_suffix = '_disparity';
+    conf_dirname = 'conf/';
+    conf_suffix = '_confidence';
     
     def get_disparity_name(image_name):
         i1 = image_name.find(pattern1);
@@ -40,15 +43,27 @@ if(KITTI):
         disparity_name = image_name[:i1] + disp_dirname + image_name[i2:i3] + disp_suffix + image_name[i3:];
         return disparity_name;
     
+    def get_confidence_name(image_name):
+        i1 = image_name.find(pattern1);
+        i1 += lp1;
+        i2 = image_name.find(pattern2);
+        i2 += lp2;
+        i3 = image_name.find(pattern3);
+        
+        confidence_name = image_name[:i1] + conf_dirname + image_name[i2:i3] + conf_suffix + image_name[i3:];
+        return confidence_name;
     
     
-    fname_left = 'train_images2.txt';
+#    fname_left = 'train_images2.txt';
+#    fname_target = 'train_new.csv'; 
+    
+    fname_left = 'val_images2.txt';
+    fname_target = 'validate_new.csv'
+    
     with open(fname_left) as f:
         images_left = f.readlines()
     # you may also want to remove whitespace characters like `\n` at the end of each line
     images_left = [x.strip() for x in images_left] 
-    
-    fname_target = 'train_new.csv'
     
     if(WRITE):
         f = open(fname_target, 'w');
@@ -63,8 +78,13 @@ if(KITTI):
     
         image_name = images_left[idx];
         disparity_name = get_disparity_name(image_name);
+        if(CONFIDENCE_MAP):
+            confidence_name = get_confidence_name(image_name);
         if(WRITE):
-            f.write('{},{}\n'.format(image_name, disparity_name));
+            if(not CONFIDENCE_MAP):
+                f.write('{},{}\n'.format(image_name, disparity_name));
+            else:
+                f.write('{},{},{}\n'.format(image_name, disparity_name, confidence_name));
         
         if(SANITY_CHECK):
             im = cv2.imread(image_name);
@@ -75,8 +95,9 @@ if(KITTI):
             if(mean_disp > 250.0 or mean_im > 250.0):
                 print('filename: {}'.format(image_name));
                 invalid_disp += 1;        
-        
-    print('Number of invalid disparity maps: {}'.format(invalid_disp));
+                
+    if(SANITY_CHECK):   
+        print('Number of invalid disparity maps: {}'.format(invalid_disp));
     
     if(WRITE):
         f.close();
