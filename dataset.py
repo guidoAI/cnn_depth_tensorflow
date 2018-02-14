@@ -4,7 +4,7 @@ import numpy as np
 from PIL import Image
 
 # data_type shouild come from one source. Now we have to set it both here and in model.py
-data_type = 'forest'; # 'NYU' # 'KITTI' # 'forest'
+data_type = 'KITTI'; # 'NYU' # 'KITTI' # 'forest'
 
 if(data_type == 'NYU'):
     IMAGE_HEIGHT = 228
@@ -48,7 +48,7 @@ class DataSet:
         if(data_type == 'NYU' or data_type == 'forest'):
             depth = tf.div(depth, [255.0])
         else:
-            depth = tf.div(depth, [64.0])            
+            depth = tf.div(depth, [64.0])      
         #depth = tf.cast(depth, tf.int64)
         # resize
         image = tf.image.resize_images(image, (IMAGE_HEIGHT, IMAGE_WIDTH))

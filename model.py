@@ -7,7 +7,7 @@ from model_part import conv2d
 from model_part import fc
 
 # data_type shouild come from one source. Now we have to set it both here and in dataset.py
-data_type = 'forest'; # 'NYU' # 'KITTI'
+data_type = 'KITTI'; # 'NYU' # 'KITTI' # 'forest'
 
 if(data_type == 'NYU'):
     OUTPUT_HEIGHT = 55;

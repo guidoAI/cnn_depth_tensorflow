@@ -82,10 +82,10 @@ if(KITTI):
         f.close();
 else:
     # based on two directories, one with images, the other with depth maps:
-    dir_name_images = './data/learn_images/';
-    dir_name_depths = './data/dense_GT_images/';
+    dir_name_images = '/home/guido/KITTI/2011_09_26/2011_09_26_drive_0002_sync/image_02/data/'; #'./test_kitti/'; #'./data/learn_images/';
+    dir_name_depths = '/home/guido/KITTI/2011_09_26/2011_09_26_drive_0002_sync/GT_disp/';#'./test_kitti/'; #'./data/dense_GT_images/';
 
-    fname_target = 'train_nuovo.csv'
+    fname_target = 'test_kitti.csv'; #'train_nuovo.csv'
     f = open(fname_target, 'w');
 
     for file in os.listdir(dir_name_images):
