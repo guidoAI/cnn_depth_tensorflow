@@ -18,11 +18,12 @@ LOG_DEVICE_PLACEMENT = False
 BATCH_SIZE = 8
 TRAIN_FILE = "train_new.csv"
 # Validation adaptations initially from https://raw.githubusercontent.com/ImaduddinAMajid/cnn_depth_tensorflow/4aa1846ec56efcbfc7acc55f93471366c65e152a/task.py
+VALIDATION_SET = True;
 VALIDATION_FILE = "validate_new.csv" 
 COARSE_DIR = "coarse"
 REFINE_DIR = "refine"
 
-REFINE_TRAIN = False
+REFINE_TRAIN = True
 FINE_TUNE = False
 
 def train():
@@ -30,28 +31,37 @@ def train():
         global_step = tf.Variable(0, trainable=False)
         dataset = DataSet(BATCH_SIZE)
         images, depths, invalid_depths = dataset.csv_inputs(TRAIN_FILE)
-        val_dataset = DataSet(BATCH_SIZE)        
-        val_images, val_depths, val_invalid_depths = val_dataset.csv_inputs(VALIDATION_FILE)
         keep_conv = tf.placeholder(tf.float32)
         keep_hidden = tf.placeholder(tf.float32)
-        val_keep_conv = tf.placeholder(tf.float32)
-        val_keep_hidden = tf.placeholder(tf.float32)
+        
+        if(VALIDATION_SET):
+            val_dataset = DataSet(BATCH_SIZE)        
+            val_images, val_depths, val_invalid_depths = val_dataset.csv_inputs(VALIDATION_FILE)        
+#            val_keep_conv = tf.placeholder(tf.float32)
+#            val_keep_hidden = tf.placeholder(tf.float32)
         
         if REFINE_TRAIN:
             print("refine train.")
-            coarse = model.inference(images, keep_conv, trainable=False)
-            logits = model.inference_refine(images, coarse, keep_conv, keep_hidden)
-            # why was there no val_logits here?
-            # val_logits = model.inference(val_images, coarse, val_keep_conv, val_keep_hidden, reuse=True, trainable=False)
+            coarse = model.inference(images, trainable=False) 
+            logits = model.inference_refine(images, coarse, keep_conv) 
+            
+            if(VALIDATION_SET):
+                # why was there no val_logits here?
+                val_coarse = model.inference(val_images, reuse= True, trainable=False);
+                val_logits = model.inference_refine(val_images, val_coarse, keep_conv, reuse=True, trainable=False)
         else:
             print("coarse train.")
-            logits = model.inference(images, keep_conv, keep_hidden)            
-            val_logits = model.inference(val_images, reuse=True, trainable=False)
+            logits = model.inference(images, keep_conv, keep_hidden)  # why these parameters?          
+            if(VALIDATION_SET):
+                val_logits = model.inference(val_images, reuse=True, trainable=False)
         
         loss = model.loss(logits, depths, invalid_depths)            
         train_op = op.train(loss, global_step, BATCH_SIZE)        
-        val_loss = model.loss(val_logits, val_depths, val_invalid_depths)
-        val_op = op.train(val_loss, global_step, BATCH_SIZE)
+
+        if(VALIDATION_SET):
+            val_loss = model.loss(val_logits, val_depths, val_invalid_depths)
+            val_op = op.train(val_loss, global_step, BATCH_SIZE)
+
         init_op = tf.initialize_all_variables()
 
         # Session
@@ -118,13 +128,16 @@ def train():
                 
                 if index % 10 == 0:
                     # print("%s: %d[epoch]: %d[iteration]: train loss %f" % (datetime.now(), step, index, loss_value))
-                
-                    _, val_loss_value, val_logits_val, val_images_val = sess.run([val_op, val_loss, val_logits, val_images])
+                    if(VALIDATION_SET):                
+                        _, val_loss_value, val_logits_val, val_images_val = sess.run([val_op, val_loss, val_logits, val_images], feed_dict={keep_conv: 0.8, keep_hidden: 0.5})
+                        losses[loss_index, 1] = val_loss_value;
+                        print("%s: %d[epoch]: %d[iteration]: train loss %f validation loss %f" % (datetime.now(), step, index, loss_value, val_loss_value))
+                    else:
+                        print("%s: %d[epoch]: %d[iteration]: train loss %f" % (datetime.now(), step, index, loss_value))      
+                        
                     losses[loss_index, 0] = loss_value;
-                    losses[loss_index, 1] = val_loss_value;
                     loss_index += 1;
-                
-                    print("%s: %d[epoch]: %d[iteration]: train loss %f validation loss %f" % (datetime.now(), step, index, loss_value, val_loss_value))
+                    
                     assert not np.isnan(loss_value), 'Model diverged with loss = NaN'
                     
                     with open('losses.pkl', 'w') as f:
